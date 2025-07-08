@@ -1,5 +1,7 @@
 # PHP Utils
 
+Estas librerías han sido creadas con fines educativos para facilitar algunas funcionalidades de PHP. 
+
 ## DB PDO
 Esta librería facilita el uso de la librería PDO crendo funciones específicas para queries, insert, update y delete.
 Dentro del fichero hay dos versiones:
