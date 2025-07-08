@@ -9,9 +9,7 @@ class Validador
     public $campos = [];
     private $method;
 
-    public function __construct()
-    {
-    }
+    public function __construct() {}
 
     /**
      * add
@@ -66,6 +64,10 @@ function validar_formulario($datosFormulario, $campos)
                 if (empty($valor)) {
                     $errores[$campo][] = $mensaje ?: "El campo '$campo' es obligatorio.";
                 }
+            } elseif ($regla === 'id') {
+                if (!empty($valor) && !filter_var($valor, FILTER_VALIDATE_INT) && intval($valor)>0) {
+                    $errores[$campo][] = $mensaje ?: "El id no es válido";
+                }
             } elseif ($regla === 'email') {
                 if (!empty($valor) && !filter_var($valor, FILTER_VALIDATE_EMAIL)) {
                     $errores[$campo][] = $mensaje ?: "El correo electrónico no es válido.";
@@ -73,8 +75,8 @@ function validar_formulario($datosFormulario, $campos)
             } elseif ($regla === 'numero') {
                 if (!empty($valor) && !is_numeric($valor)) {
                     $errores[$campo][] = $mensaje ?: "El valor debe ser un número entero.";
-                }else{
-                    $valores[$campo]=intval($valores[$campo]);
+                } else {
+                    $valores[$campo] = intval($valores[$campo]);
                 }
             } elseif ($regla === 'decimal') {
                 if (!empty($valor) && !is_numeric($valor)) {
@@ -100,13 +102,13 @@ function validar_formulario($datosFormulario, $campos)
                     $msg = $mensaje ?: "Los valores no coinciden.";
                     $errores[$campo][] = $msg;
                 }
-            }elseif (str_starts_with($regla, 'en:')) {
+            } elseif (str_starts_with($regla, 'en:')) {
                 $valoresPermitidos = array_map('trim', explode(',', substr($regla, 3)));
                 if (!empty($valor) && !in_array($valor, $valoresPermitidos)) {
                     $msg = $mensaje ?: "El valor '$valor' no es válido para el campo '$campo'.";
                     $errores[$campo][] = $msg;
                 }
-            }elseif ($regla === 'password') {
+            } elseif ($regla === 'password') {
                 // Regla 'password' completa: requerido, mínimo 8, alfanumérico
                 if (empty($valor)) {
                     $errores[$campo][] = $mensaje ?: "La contraseña es obligatoria.";
