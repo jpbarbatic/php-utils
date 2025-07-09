@@ -50,9 +50,9 @@ function validar_formulario($datosFormulario, $campos)
     $valores = [];
 
     foreach ($campos as $campo => $config) {
+
         // Limpiar el valor antes de validar
         $valor = $valores[$campo] = trim(htmlspecialchars($datosFormulario[$campo] ?? $config['defecto']));
-
         $reglas = $config['reglas'] ?? [];
         $mensajes = $config['mensajes'] ?? [];
 
@@ -65,7 +65,7 @@ function validar_formulario($datosFormulario, $campos)
                     $errores[$campo][] = $mensaje ?: "El campo '$campo' es obligatorio.";
                 }
             } elseif ($regla === 'id') {
-                if (!empty($valor) && !filter_var($valor, FILTER_VALIDATE_INT) && intval($valor)>0) {
+                if (!empty($valor) && !filter_var($valor, FILTER_VALIDATE_INT) && intval($valor) > 0) {
                     $errores[$campo][] = $mensaje ?: "El id no es válido";
                 }
             } elseif ($regla === 'email') {
@@ -117,6 +117,7 @@ function validar_formulario($datosFormulario, $campos)
                 } elseif (!preg_match('/(?=^.{8,}$)((?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$/', $valor)) {
                     $errores[$campo][] = $mensaje ?: "La contraseña debe contener letras mayúsculas, minúsculas y números.";
                 }
+            } elseif ($regla === 'varchar') {
             }
         }
     }

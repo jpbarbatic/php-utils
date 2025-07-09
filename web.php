@@ -1,6 +1,5 @@
 <?php
 
-
 function sortable($text, $field, $default = false)
 {
     $q = $_SERVER['QUERY_STRING'];

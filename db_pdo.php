@@ -269,74 +269,84 @@ function db_get_by_id(PDO $conn, string $table, mixed $id, string $id_name = 'id
  * @param  mixed $items_por_pagina
  * @return array
  */
-function db_filter($db, $tabla, $filtro, $orden_campo='id', $orden_dir = 'asc', $pagina = 1, $items_por_pagina=20): array|false
+function db_filter($db, $tabla, $filtro, $tipo_filtro = 'or', $orden_campo = 'id', $orden_dir = 'asc', $pagina = 1, $items_por_pagina = 20): array|false
 {
     if ($db) {
         $whereArray = [];
         $params = [];
         $where = '';
-        
         if ($filtro and count($filtro) > 0) {
             foreach ($filtro as $f) {
                 $campo = $f['campo'];
                 $tipo = $f['tipo'];
                 if ($tipo == 'texto') {
-                    $whereArray[] = "LOWER($campo) LIKE LOWER(?)";
-                    $params[] = '%' . $f['valor'] . '%';
+                    if (trim($f['valor']) != '') {
+                        $whereArray[] = "LOWER($campo) LIKE LOWER(?)";
+                        $params[] = '%' . $f['valor'] . '%';
+                    }
                 } else if ($tipo == 'entero') {
-                    $whereArray[] = "$campo=?";
-                    $params[] = $f['valor'];
+                    if (is_numeric($f['valor'])) {
+                        $whereArray[] = "$campo=?";
+                        $params[] = $f['valor'];
+                    }
                 } else if ($tipo == 'intervalo') {
-                    if(isset($f['min'])){
+                    if (isset($f['min'])) {
                         $whereArray[] = "$campo>?";
-                        $params[] = $f['min'];    
+                        $params[] = $f['min'];
                     }
-                    if(isset($f['max'])){
+                    if (isset($f['max'])) {
                         $whereArray[] = "$campo<?";
-                        $params[] = $f['max'];    
+                        $params[] = $f['max'];
                     }
-                    if(isset($f['mine'])){
+                    if (isset($f['mine'])) {
                         $whereArray[] = "$campo>=?";
-                        $params[] = $f['mine'];    
+                        $params[] = $f['mine'];
                     }
-                    if(isset($f['maxe'])){
+                    if (isset($f['maxe'])) {
                         $whereArray[] = "$campo<=?";
-                        $params[] = $f['maxe'];    
+                        $params[] = $f['maxe'];
                     }
                 }
             }
-            $where = 'WHERE ' . implode(' AND ', $whereArray);
+            if (count($params) > 0) {
+                $where = 'WHERE ' . implode(' '.$tipo_filtro.' ', $whereArray);
+            }
         }
 
         $sql_total = "SELECT COUNT(*) as total FROM $tabla $where";
+        //print_r($params);
         //echo $sql_total . PHP_EOL;exit;
         $total = db_query($db, $sql_total, $params)[0]['total'];
-        //echo $total.PHP_EOL;
-        $num_paginas=ceil($total/$items_por_pagina);
-       
-        if($pagina<0 or $pagina>$num_paginas)
-        {
+
+        //echo "total: ".$total.PHP_EOL;exit;
+
+        $num_paginas = ceil($total / $items_por_pagina);
+        //echo "Pagina: $pagina";exit;
+
+        if ($pagina < 0 or ($num_paginas > 0 and $pagina > $num_paginas)) {
             return false;
         }
 
         $limit = $items_por_pagina;
         $offset = $items_por_pagina * ($pagina - 1);
-        if(!in_array($orden_dir, ['asc', 'desc']))
-        {
+
+        if (!in_array($orden_dir, ['asc', 'desc'])) {
             return false;
         }
+
         $sql = "SELECT * FROM $tabla $where ORDER BY $orden_campo $orden_dir";
 
-        if($pagina>0){
-             $sql.=" LIMIT $limit OFFSET $offset";
+        if ($pagina > 0) {
+            $sql .= " LIMIT $limit OFFSET $offset";
         }
 
-        //echo $sql . PHP_EOL; exit;
-        //print_r($params);
+        //echo $sql . PHP_EOL;
+        //exit;
+        //      print_r($params);exit;
         $registros = db_query($db, $sql, $params);
-        //print_r($registros);exit;
+        //      print_r($registros);exit;
         //return false;
-        return ['total'=>$total, 'datos'=>$registros];
+        return ['total' => $total, 'datos' => $registros];
     } else {
         return false;
     }

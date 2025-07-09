@@ -56,7 +56,7 @@ class Imagen
         return false;
     }
 
-    public function stream()
+    public function out()
     {
         header('content-type: '.$this->mime);
         if($this->isJPG())
