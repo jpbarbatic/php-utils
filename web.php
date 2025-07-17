@@ -262,3 +262,19 @@ function procesarUrl($routes)
 
     return ['error' => 'No se encontró la ruta'];
 }
+
+
+function cookie($nombre, $var, $minutos, $https=true){
+    setcookie(
+        $nombre,
+        $var,
+        [
+          'expires' => time() + $minutos*60, // Válido por una hora
+          'path' => URL_BASE,
+          'domain' => '',
+          'secure' => $https, // Solo en HTTPS
+          'httponly' => true,
+          'samesite' => 'Strict'
+        ]
+      );
+}

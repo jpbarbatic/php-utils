@@ -50,9 +50,14 @@ function validar_formulario($datosFormulario, $campos)
     $valores = [];
 
     foreach ($campos as $campo => $config) {
-
+    
         // Limpiar el valor antes de validar
-        $valor = $valores[$campo] = trim(htmlspecialchars($datosFormulario[$campo] ?? $config['defecto']));
+        if(isset($datosFormulario[$campo])) {
+          $valor = $valores[$campo] = trim(htmlspecialchars($datosFormulario[$campo]));
+        }else{
+          $valor = $valores[$campo] = $config['defecto'];
+        }
+        
         $reglas = $config['reglas'] ?? [];
         $mensajes = $config['mensajes'] ?? [];
 
@@ -61,6 +66,7 @@ function validar_formulario($datosFormulario, $campos)
             $mensaje = $mensajes[$regla] ?? null;
 
             if ($regla === 'requerido') {
+                echo "Es requerido";
                 if (empty($valor)) {
                     $errores[$campo][] = $mensaje ?: "El campo '$campo' es obligatorio.";
                 }
@@ -119,6 +125,7 @@ function validar_formulario($datosFormulario, $campos)
                 }
             } elseif ($regla === 'varchar') {
             }
+            
         }
     }
 

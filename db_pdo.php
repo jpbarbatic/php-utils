@@ -226,6 +226,76 @@ function db_query(PDO $conn, string $query, ?array $params = null): array|false
         return false;
     } catch (PDOException $e) {
         // Registramos cualquier error ocurrido
+        if (DEBUG) {
+            echo $e;
+        }
+        logging($e);
+        return false;
+    }
+}
+
+/**
+ * db_select
+ *
+ * Permite realizar SELECT con paginación. Devuelve el número total de registros y los elementos correspondientes
+ * a la página que se indique.
+ * @param  mixed $conn
+ * @param  mixed $select
+ * @param  mixed $from
+ * @param  mixed $where
+ * @param  mixed $params
+ * @param  mixed $paginacion
+ * @return array|false
+ */
+function db_select(PDO $conn, $select, $from, $where, $orden=null, $params=null, $paginacion = null): array|false
+{
+    try {
+
+        // Sentencia para obtener los totales
+        $sql = "SELECT count(*) as total FROM $from";
+        if (isset($where) and $where != '') {
+            $sql .= " WHERE $where";
+        }
+
+        $stmt = $conn->prepare($sql);
+
+        // Ejecutamos la consulta con los parámetros dados
+        if ($stmt->execute($params)) {
+            // Devolvemos todos los resultados
+            $res = $stmt->fetchAll();
+        }
+
+        
+        $total = $res[0]['total'];
+
+        // Sentencia para obtener los registros
+        $sql = "SELECT $select FROM $from";
+        if (isset($where) and $where != '') {
+            $sql .= " WHERE $where";
+        }
+
+        if ($paginacion) {
+            $sql .= " LIMIT " . ($paginacion['pagina'] - 1) * ($paginacion['num_items']) . ',' . $paginacion['num_items'];
+        }
+        if ($orden) {
+            $sql .= " ORDER BY ? ?";
+            $params[] = $orden['orden_por'];
+            $params[] = $orden['orden_dir'];
+        }
+        $stmt = $conn->prepare($sql);
+
+        // Ejecutamos la consulta con los parámetros dados
+        if ($stmt->execute($params)) {
+            // Devolvemos todos los resultados
+            return ['total' => $total, 'datos' => $stmt->fetchAll()];
+        }
+        return false;
+    } catch (PDOException $e) {
+        // Registramos cualquier error ocurrido
+        if (DEBUG) {
+            echo $e;
+        }
+
         logging($e);
         return false;
     }
@@ -269,7 +339,7 @@ function db_get_by_id(PDO $conn, string $table, mixed $id, string $id_name = 'id
  * @param  mixed $items_por_pagina
  * @return array
  */
-function db_filter($db, $tabla, $filtro, $tipo_filtro = 'or', $orden_campo = 'id', $orden_dir = 'asc', $pagina = 1, $items_por_pagina = 20): array|false
+function db_filter($db, $tabla, $campos, $filtro, $tipo_filtro = 'or', $orden_campo = 'id', $orden_dir = 'asc', $pagina = 0, $items_por_pagina = 20): array|false
 {
     if ($db) {
         $whereArray = [];
@@ -285,6 +355,11 @@ function db_filter($db, $tabla, $filtro, $tipo_filtro = 'or', $orden_campo = 'id
                         $params[] = '%' . $f['valor'] . '%';
                     }
                 } else if ($tipo == 'entero') {
+                    if (is_numeric($f['valor'])) {
+                        $whereArray[] = "$campo=?";
+                        $params[] = $f['valor'];
+                    }
+                } else if ($tipo == 'id') {
                     if (is_numeric($f['valor'])) {
                         $whereArray[] = "$campo=?";
                         $params[] = $f['valor'];
@@ -309,7 +384,7 @@ function db_filter($db, $tabla, $filtro, $tipo_filtro = 'or', $orden_campo = 'id
                 }
             }
             if (count($params) > 0) {
-                $where = 'WHERE ' . implode(' '.$tipo_filtro.' ', $whereArray);
+                $where = 'WHERE ' . implode(' ' . $tipo_filtro . ' ', $whereArray);
             }
         }
 
@@ -334,14 +409,27 @@ function db_filter($db, $tabla, $filtro, $tipo_filtro = 'or', $orden_campo = 'id
             return false;
         }
 
-        $sql = "SELECT * FROM $tabla $where ORDER BY $orden_campo $orden_dir";
+        if (isset($campos) and !empty($campos)) {
+            $camposSql = [];
+            foreach ($campos as $campo => $alias) {
+                if ($alias == null) {
+                    $camposSql[] = $campo;
+                } else {
+                    $camposSql[] = "$campo as $alias";
+                }
+            }
+            $columnas = implode(', ', $camposSql);
+        } else {
+            $columnas = '*';
+        }
+
+        $sql = "SELECT $columnas FROM $tabla $where ORDER BY $orden_campo $orden_dir";
 
         if ($pagina > 0) {
             $sql .= " LIMIT $limit OFFSET $offset";
         }
 
-        //echo $sql . PHP_EOL;
-        //exit;
+        //  echo $sql . PHP_EOL; exit;
         //      print_r($params);exit;
         $registros = db_query($db, $sql, $params);
         //      print_r($registros);exit;
