@@ -44,6 +44,9 @@ class Validador
 /**
  * Validación de formularios
  */
+/**
+ * Validación de formularios
+ */
 function validar_formulario($datosFormulario, $campos)
 {
     $errores = [];
