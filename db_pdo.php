@@ -256,7 +256,7 @@ function db_select(PDO $conn, $select, $from, $where, $orden=null, $params=null,
         if (isset($where) and $where != '') {
             $sql .= " WHERE $where";
         }
-
+   
         $stmt = $conn->prepare($sql);
 
         // Ejecutamos la consulta con los parámetros dados
@@ -272,6 +272,12 @@ function db_select(PDO $conn, $select, $from, $where, $orden=null, $params=null,
         $sql = "SELECT $select FROM $from";
         if (isset($where) and $where != '') {
             $sql .= " WHERE $where";
+        }
+        if ($orden and isset($orden['orden_por'])) {
+            $sql .= " ORDER BY ".$orden['orden_por'];
+            if(isset($orden['orden_dir'])){
+                $sql .= ' '.$orden['orden_dir'];
+            }
         }
 
         if ($paginacion) {

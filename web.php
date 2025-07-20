@@ -68,11 +68,14 @@ function print_array($array)
     }
 }
 
+
 /**
  * ruta
  *
  * @param  mixed $r
- * @param  mixed $idioma
+ * @param  mixed $usarParams
+ * @param  mixed $params
+ * @param  mixed $delParams
  * @return void
  */
 function ruta($r, $usarParams = false, $params = null, $delParams = null)
@@ -82,9 +85,11 @@ function ruta($r, $usarParams = false, $params = null, $delParams = null)
     if ($usarParams) {
         $parts = parse_url($_SERVER['REQUEST_URI']);
         $lastParams = [];
+        
         if(isset($parts['query'])){
             parse_str($parts['query'], $lastParams);
         }
+
         if ($params) {
             foreach ($params as $p => $v) {
                 $lastParams[$p] = $v;

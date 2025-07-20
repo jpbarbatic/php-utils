@@ -12,6 +12,16 @@ class ListadoPDF extends FPDF
     {
         parent::__construct();
         $this->fields = $fields;
+        foreach($this->fields as $key=>$field)
+        {
+            if(!isset($field['width'])){
+                $this->fields[$key]['width']=20;
+            }
+
+            if(!isset($field['display'])){
+                $this->fields[$key]['display']=ucfirst($key);
+            }            
+        }
         $this->title = $title;
     }
     // Cabecera de página
@@ -30,7 +40,7 @@ class ListadoPDF extends FPDF
         $this->SetFont('Arial', '', 10);
         // Título
         $this->Ln(1);
-        $this->Cell(0, 18, 'Fecha: ' . date('d/m/Y'), 0, 0, 'C');
+        $this->Cell(0, 18, $this->utf('Nº registros: ').$this->num_registros, 0, 0, 'C');
 
         // Salto de línea
         $this->Ln(15);
@@ -49,10 +59,17 @@ class ListadoPDF extends FPDF
 
         $this->Ln();
     }
-
+    
+    /**
+     * utf
+     * Esta función es necesaria para convertir de UTF al formato regional. Si no se utiliza,
+     * da problema con tildes y letras especiales
+     * @param  mixed $texto
+     * @return void
+     */
     function utf($texto)
     {
-        return iconv('utf-8', 'cp1252', $texto);
+        return iconv('utf-8', 'ISO-8859-1//IGNORE', $texto);
     }
 
     // Pie de página
@@ -66,9 +83,15 @@ class ListadoPDF extends FPDF
         // Arial italic 8
         $this->SetFont('Arial', '', 8);
         // Número de página
-        $this->Cell(0, 10, $this->utf('Página ') . $this->PageNo() . $this->utf(" - Nº regs: ") . $this->num_registros, 0, 0, 'C');
+        $this->Cell(0, 10, $this->utf('Página ') . $this->PageNo() . ' - Fecha: ' . date('d/m/Y'), 0, 0, 'C');
     }
-
+    
+    /**
+     * render
+     *
+     * @param  mixed $data
+     * @return void
+     */
     public function render($data)
     {
         $this->num_registros = count($data);
@@ -76,25 +99,25 @@ class ListadoPDF extends FPDF
         // Restauración de colores y fuentes
         $this->SetFillColor(224, 235, 255);
         $this->SetTextColor(0);
-        $this->SetFont('Arial', '', 10);
+        $this->SetFont('Arial', '', 8);
 
         // Datos
         $fill = false;
         foreach ($data as $row) {
-            foreach ($this->fields as $field) {
-                $text = $this->filterField($row[$field['name']], isset($field['type']) ? $field['type'] : null);
-                $this->Cell($field['width'] * ($this->GetPageWidth() - 20) / 100, 6, $text, 'LR', 0, $field['align'], $fill);
+            foreach ($this->fields as $key=>$field) {
+                $text = $this->filterField($row[$key], isset($field['type']) ? $field['type'] : null);
+                $this->Cell($field['width'] * ($this->GetPageWidth() - 20) / 100, 6, $text, 'LR', 0, isset($field['align'])?$field['align']:'C', $fill);
             }
             $this->Ln();
             $fill = !$fill;
         }
-        $this->Output();
+        $this->Output('I', 'listado.pdf');
     }
 
     public function filterField($str, $type = null)
     {
         if ($type == null)
-            return $this->utf($str);
+            return $this->utf(ucfirst($str));
 
         if ($type == 'money')
             return $this->utf(number_format(floatval($str), 2, ',') . " €");

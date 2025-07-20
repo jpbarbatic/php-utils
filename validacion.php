@@ -25,10 +25,11 @@ class Validador
             $this->campos[$campo]['mensajes'][$regla] = $mensaje;
         }
     }
-
+    
     /**
      * validar
      *
+     * @param  mixed $formulario
      * @return array
      */
     public function validar($formulario): array|false
@@ -53,82 +54,84 @@ function validar_formulario($datosFormulario, $campos)
     $valores = [];
 
     foreach ($campos as $campo => $config) {
-    
+
         // Limpiar el valor antes de validar
-        if(isset($datosFormulario[$campo])) {
-          $valor = $valores[$campo] = trim(htmlspecialchars($datosFormulario[$campo]));
-        }else{
-          $valor = $valores[$campo] = $config['defecto'];
-        }
-        
-        $reglas = $config['reglas'] ?? [];
-        $mensajes = $config['mensajes'] ?? [];
+        if (isset($datosFormulario[$campo])) {
 
-        foreach ($reglas as $regla) {
-            // Mensaje predeterminado o personalizado
-            $mensaje = $mensajes[$regla] ?? null;
-
-            if ($regla === 'requerido') {
-                echo "Es requerido";
-                if (empty($valor)) {
-                    $errores[$campo][] = $mensaje ?: "El campo '$campo' es obligatorio.";
-                }
-            } elseif ($regla === 'id') {
-                if (!empty($valor) && !filter_var($valor, FILTER_VALIDATE_INT) && intval($valor) > 0) {
-                    $errores[$campo][] = $mensaje ?: "El id no es válido";
-                }
-            } elseif ($regla === 'email') {
-                if (!empty($valor) && !filter_var($valor, FILTER_VALIDATE_EMAIL)) {
-                    $errores[$campo][] = $mensaje ?: "El correo electrónico no es válido.";
-                }
-            } elseif ($regla === 'numero') {
-                if (!empty($valor) && !is_numeric($valor)) {
-                    $errores[$campo][] = $mensaje ?: "El valor debe ser un número entero.";
-                } else {
-                    $valores[$campo] = intval($valores[$campo]);
-                }
-            } elseif ($regla === 'decimal') {
-                if (!empty($valor) && !is_numeric($valor)) {
-                    $errores[$campo][] = $mensaje ?: "El valor debe ser un número (entero o decimal).";
-                }
-            } elseif (str_starts_with($regla, 'min:')) {
-                $min = substr($regla, 4);
-                if (strlen($valor) < $min) {
-                    $msg = $mensaje ?: "Debe tener al menos $min caracteres.";
-                    $errores[$campo][] = $msg;
-                }
-            } elseif (str_starts_with($regla, 'max:')) {
-                $max = substr($regla, 4);
-                if (strlen($valor) > $max) {
-                    $msg = $mensaje ?: "No puede tener más de $max caracteres.";
-                    $errores[$campo][] = $msg;
-                }
-            } elseif (str_starts_with($regla, 'confirmar:')) {
-                $otroCampo = substr($regla, 10);
-                $valorOtro = $datosFormulario[$otroCampo] ?? '';
-
-                if ($valor !== trim(htmlspecialchars($valorOtro))) {
-                    $msg = $mensaje ?: "Los valores no coinciden.";
-                    $errores[$campo][] = $msg;
-                }
-            } elseif (str_starts_with($regla, 'en:')) {
-                $valoresPermitidos = array_map('trim', explode(',', substr($regla, 3)));
-                if (!empty($valor) && !in_array($valor, $valoresPermitidos)) {
-                    $msg = $mensaje ?: "El valor '$valor' no es válido para el campo '$campo'.";
-                    $errores[$campo][] = $msg;
-                }
-            } elseif ($regla === 'password') {
-                // Regla 'password' completa: requerido, mínimo 8, alfanumérico
-                if (empty($valor)) {
-                    $errores[$campo][] = $mensaje ?: "La contraseña es obligatoria.";
-                } elseif (strlen($valor) < 8) {
-                    $errores[$campo][] = $mensaje ?: "La contraseña debe tener al menos 8 caracteres.";
-                } elseif (!preg_match('/(?=^.{8,}$)((?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$/', $valor)) {
-                    $errores[$campo][] = $mensaje ?: "La contraseña debe contener letras mayúsculas, minúsculas y números.";
-                }
-            } elseif ($regla === 'varchar') {
-            }
+            $valor = $valores[$campo] = trim(htmlspecialchars($datosFormulario[$campo]));
+            $reglas = $config['reglas'] ?? [];
+            $mensajes = $config['mensajes'] ?? [];
             
+            foreach ($reglas as $regla) {
+                // Mensaje predeterminado o personalizado
+                $mensaje = $mensajes[$regla] ?? null;
+
+                if ($regla === 'requerido') {
+                    echo "Es requerido";
+                    if (empty($valor)) {
+                        $errores[$campo][] = $mensaje ?: "El campo '$campo' es obligatorio.";
+                    }
+                } elseif ($regla === 'id') {
+                    if (!empty($valor) && !filter_var($valor, FILTER_VALIDATE_INT) && intval($valor) > 0) {
+                        $errores[$campo][] = $mensaje ?: "El id no es válido";
+                    }
+                } elseif ($regla === 'email') {
+                    if (!empty($valor) && !filter_var($valor, FILTER_VALIDATE_EMAIL)) {
+                        $errores[$campo][] = $mensaje ?: "El correo electrónico no es válido.";
+                    }
+                } elseif ($regla === 'numero') {
+                    if (!empty($valor) && !is_numeric($valor)) {
+                        $errores[$campo][] = $mensaje ?: "El valor debe ser un número entero.";
+                    } else {
+                        $valores[$campo] = intval($valores[$campo]);
+                    }
+                } elseif ($regla === 'decimal') {
+                    if (!empty($valor) && !is_numeric($valor)) {
+                        $errores[$campo][] = $mensaje ?: "El valor debe ser un número (entero o decimal).";
+                    }
+                } elseif (str_starts_with($regla, 'min:')) {
+                    $min = substr($regla, 4);
+                    if (strlen($valor) < $min) {
+                        $msg = $mensaje ?: "Debe tener al menos $min caracteres.";
+                        $errores[$campo][] = $msg;
+                    }
+                } elseif (str_starts_with($regla, 'max:')) {
+                    $max = substr($regla, 4);
+                    if (strlen($valor) > $max) {
+                        $msg = $mensaje ?: "No puede tener más de $max caracteres.";
+                        $errores[$campo][] = $msg;
+                    }
+                } elseif (str_starts_with($regla, 'confirmar:')) {
+                    $otroCampo = substr($regla, 10);
+                    $valorOtro = $datosFormulario[$otroCampo] ?? '';
+
+                    if ($valor !== trim(htmlspecialchars($valorOtro))) {
+                        $msg = $mensaje ?: "Los valores no coinciden.";
+                        $errores[$campo][] = $msg;
+                    }
+                } elseif (str_starts_with($regla, 'en:')) {
+                    echo "Comprobamos";
+                    $valoresPermitidos = array_map('trim', explode(',', substr($regla, 3)));
+                    if (!empty($valor) && !in_array($valor, $valoresPermitidos)) {
+                        $msg = $mensaje ?: "El valor '$valor' no es válido para el campo '$campo'.";
+                        $errores[$campo][] = $msg;
+                    }
+                } elseif ($regla === 'password') {
+                    // Regla 'password' completa: requerido, mínimo 8, alfanumérico
+                    if (empty($valor)) {
+                        $errores[$campo][] = $mensaje ?: "La contraseña es obligatoria.";
+                    } elseif (strlen($valor) < 8) {
+                        $errores[$campo][] = $mensaje ?: "La contraseña debe tener al menos 8 caracteres.";
+                    } elseif (!preg_match('/(?=^.{8,}$)((?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$/', $valor)) {
+                        $errores[$campo][] = $mensaje ?: "La contraseña debe contener letras mayúsculas, minúsculas y números.";
+                    }
+                } elseif ($regla === 'varchar') {
+                }
+            }
+        } else {
+            if (isset($config['defecto'])) {
+                $valores[$campo] = $config['defecto'];
+            }
         }
     }
 
