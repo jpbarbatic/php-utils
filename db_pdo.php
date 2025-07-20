@@ -283,11 +283,7 @@ function db_select(PDO $conn, $select, $from, $where, $orden=null, $params=null,
         if ($paginacion) {
             $sql .= " LIMIT " . ($paginacion['pagina'] - 1) * ($paginacion['num_items']) . ',' . $paginacion['num_items'];
         }
-        if ($orden) {
-            $sql .= " ORDER BY ? ?";
-            $params[] = $orden['orden_por'];
-            $params[] = $orden['orden_dir'];
-        }
+
         $stmt = $conn->prepare($sql);
 
         // Ejecutamos la consulta con los parámetros dados

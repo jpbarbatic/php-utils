@@ -25,7 +25,7 @@ class Validador
             $this->campos[$campo]['mensajes'][$regla] = $mensaje;
         }
     }
-    
+
     /**
      * validar
      *
@@ -55,13 +55,11 @@ function validar_formulario($datosFormulario, $campos)
 
     foreach ($campos as $campo => $config) {
 
-        // Limpiar el valor antes de validar
         if (isset($datosFormulario[$campo])) {
-
             $valor = $valores[$campo] = trim(htmlspecialchars($datosFormulario[$campo]));
             $reglas = $config['reglas'] ?? [];
             $mensajes = $config['mensajes'] ?? [];
-            
+
             foreach ($reglas as $regla) {
                 // Mensaje predeterminado o personalizado
                 $mensaje = $mensajes[$regla] ?? null;
