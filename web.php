@@ -32,7 +32,7 @@ function sortable($text, $field, $default = false)
     $parts = parse_url($_SERVER['REQUEST_URI']);
 
     $url = $parts['path'] . '?' . http_build_query($params);
-    $html = "<a href=\"{$url}\"><nobr>{$text} <i class=\"fas fa-{$icon}\"></i></nobr></a> ";
+    $html = "<a href=\"{$url}\"><nobr>{$text} <i class=\"bi bi-{$icon}\"></i></nobr></a> ";
 
     return $html;
 }
