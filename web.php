@@ -30,8 +30,9 @@ function sortable($text, $field, $default = false)
     }
 
     $parts = parse_url($_SERVER['REQUEST_URI']);
+
     $url = $parts['path'] . '?' . http_build_query($params);
-    $html = "<a href=\"{$url}\">{$text}</a> <i class=\"fas fa-{$icon}\"></i>";
+    $html = "<a href=\"{$url}\"><nobr>{$text} <i class=\"fas fa-{$icon}\"></i></nobr></a> ";
 
     return $html;
 }
@@ -48,6 +49,19 @@ function addQueryParameter($param, $value)
 function valor_array($campo, $array = null)
 {
     return is_array($array) ? ($array[$campo] ?? '') : '';
+}
+
+function fecha_array($campo, $array = null)
+{
+    return is_array($array) ? ($array[$campo] ?? '') : '';
+}
+
+function opciones_select($opciones, $indice)
+{
+    foreach ($opciones as $k => $valor) {
+        $selected = (isset($indice) and $indice == $k) ? ' selected' : '';
+        echo "<option value=\"$k\"$selected>$valor</option>" . PHP_EOL;
+    }
 }
 
 function check_access()
@@ -85,8 +99,8 @@ function ruta($r, $usarParams = false, $params = null, $delParams = null)
     if ($usarParams) {
         $parts = parse_url($_SERVER['REQUEST_URI']);
         $lastParams = [];
-        
-        if(isset($parts['query'])){
+
+        if (isset($parts['query'])) {
             parse_str($parts['query'], $lastParams);
         }
 
@@ -95,14 +109,14 @@ function ruta($r, $usarParams = false, $params = null, $delParams = null)
                 $lastParams[$p] = $v;
             }
         }
-        
+
         if ($delParams and !empty($lastParams)) {
             foreach ($delParams as $p) {
                 unset($lastParams[$p]);
             }
-        }       
-        if(!empty($lastParams)){ 
-        $url .= '?' . http_build_query($lastParams);
+        }
+        if (!empty($lastParams)) {
+            $url .= '?' . http_build_query($lastParams);
         }
         //print_r($lastParams);
     }
@@ -122,9 +136,7 @@ function redirect($url)
     exit;
 }
 
-function cargar_vista($vista, $plantilla, $titulo="", $vars=[]) {
-
-}
+function cargar_vista($vista, $plantilla, $titulo = "", $vars = []) {}
 
 /**
  * sendRequest
@@ -235,6 +247,7 @@ function procesarUrl($routes)
     */
     // Busqueda en las rutas definidas en rutas.php
     $metodoHttp = strtolower($_SERVER['REQUEST_METHOD']);
+
     if (!isset($routes[$metodoHttp])) {
         return ['error' => 'Método HTTP no soportado'];
     }
@@ -247,7 +260,7 @@ function procesarUrl($routes)
         $match = true;
 
         foreach ($segmentosRuta as $i => $parte) {
-            if (preg_match('/^{([a-zA-Z]+)}$/', $parte, $matches)) {
+            if (preg_match('/^{:([a-zA-Z]+)}$/', $parte, $matches)) {
                 $params[$matches[1]] = $segmentos[$i];
             } elseif ($parte !== $segmentos[$i]) {
                 $match = false;
@@ -264,22 +277,52 @@ function procesarUrl($routes)
             ];
         }
     }
-
     return ['error' => 'No se encontró la ruta'];
 }
 
 
-function cookie($nombre, $var, $minutos, $https=true){
+function cookie($nombre, $var, $minutos, $https = true)
+{
     setcookie(
         $nombre,
         $var,
         [
-          'expires' => time() + $minutos*60, // Válido por una hora
-          'path' => URL_BASE,
-          'domain' => '',
-          'secure' => $https, // Solo en HTTPS
-          'httponly' => true,
-          'samesite' => 'Strict'
+            'expires' => time() + $minutos * 60,
+            'path' => URL_BASE,
+            'domain' => '',
+            'secure' => $https, // Solo en HTTPS
+            'httponly' => true,
+            'samesite' => 'Strict'
         ]
-      );
+    );
+}
+
+function a_csv($filename, $campos, $datos)
+{
+
+    header('Content-Type: application/csv');
+    header("Content-Disposition: attachment; filename=$filename;");
+
+    $cabecera = [];
+    foreach ($campos as $key=>$params) {
+        if (isset($params['titulo'])) {
+            $cabecera[] = $params['titulo'];
+        } else {
+            $cabecera[] = $key;
+        }
+    }
+
+    echo implode(';', array_values($cabecera)) . PHP_EOL;
+    foreach ($datos as $dato) {
+        $valores = [];
+        foreach ($campos as $key => $params) {
+            if (isset($params['valores'])) {
+                $valores[] = $params['valores'][$dato[$key]];
+            } else {
+                $valores[] = $dato[$key];
+            }
+        }
+        echo implode(';', $valores) . PHP_EOL;
+    }
+    die;
 }

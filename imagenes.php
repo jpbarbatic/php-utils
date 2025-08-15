@@ -140,11 +140,15 @@ function imagenes_cargar($path)
  * @param  mixed $thumbnailPath
  * @return void
  */
-function imagenes_cambiar_dimensiones($path, $thumbnailPath, $thumbWidth = 300)
+function imagenes_cambiar_dimensiones($path, $mime_out, $thumbnailPath, $thumbWidth = 300)
 {
     $img = imagenes_cargar($path);
     $tmp_img =__cambiar_dimensiones($img, $thumbWidth);
-    imagejpeg($tmp_img, $thumbnailPath);
+    if($mime_out==='image/jpeg' or $mime_out==='image/jpg' ){
+      imagejpeg($tmp_img, $thumbnailPath);
+    }else if($mime_out==='image/png'){
+      imagepng($tmp_img, $thumbnailPath);
+    }
 }
 
 function __cambiar_dimensiones($img, $w)

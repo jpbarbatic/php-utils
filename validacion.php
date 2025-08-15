@@ -59,13 +59,12 @@ function validar_formulario($datosFormulario, $campos)
             $valor = $valores[$campo] = trim(htmlspecialchars($datosFormulario[$campo]));
             $reglas = $config['reglas'] ?? [];
             $mensajes = $config['mensajes'] ?? [];
-
+            
             foreach ($reglas as $regla) {
+                
                 // Mensaje predeterminado o personalizado
                 $mensaje = $mensajes[$regla] ?? null;
-
                 if ($regla === 'requerido') {
-                    echo "Es requerido";
                     if (empty($valor)) {
                         $errores[$campo][] = $mensaje ?: "El campo '$campo' es obligatorio.";
                     }
@@ -78,11 +77,19 @@ function validar_formulario($datosFormulario, $campos)
                         $errores[$campo][] = $mensaje ?: "El correo electrónico no es válido.";
                     }
                 } elseif ($regla === 'numero') {
+
                     if (!empty($valor) && !is_numeric($valor)) {
                         $errores[$campo][] = $mensaje ?: "El valor debe ser un número entero.";
                     } else {
-                        $valores[$campo] = intval($valores[$campo]);
+                        
+                        if($valores[$campo]==''){
+                            unset($valores[$campo]);
+                        }else{
+                            $valores[$campo] = intval($valores[$campo]);
+                        }
                     }
+                }elseif ($regla === 'fecha') {
+                        
                 } elseif ($regla === 'decimal') {
                     if (!empty($valor) && !is_numeric($valor)) {
                         $errores[$campo][] = $mensaje ?: "El valor debe ser un número (entero o decimal).";
@@ -108,7 +115,6 @@ function validar_formulario($datosFormulario, $campos)
                         $errores[$campo][] = $msg;
                     }
                 } elseif (str_starts_with($regla, 'en:')) {
-                    echo "Comprobamos";
                     $valoresPermitidos = array_map('trim', explode(',', substr($regla, 3)));
                     if (!empty($valor) && !in_array($valor, $valoresPermitidos)) {
                         $msg = $mensaje ?: "El valor '$valor' no es válido para el campo '$campo'.";

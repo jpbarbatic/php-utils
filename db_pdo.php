@@ -131,7 +131,7 @@ class DB
 /**
  * db_open
  *
- * @param  mixed $conf
+ * @param  mixed $conf Array con variables de conexión
  * @return PDO
  */
 function db_open($conf = null): ?PDO
@@ -247,16 +247,15 @@ function db_query(PDO $conn, string $query, ?array $params = null): array|false
  * @param  mixed $paginacion
  * @return array|false
  */
-function db_select(PDO $conn, $select, $from, $where, $orden=null, $params=null, $paginacion = null): array|false
+function db_select(PDO $conn, $select, $from, $where=null, $orden=null, $params=null, $paginacion = null): array|false
 {
     try {
-
         // Sentencia para obtener los totales
         $sql = "SELECT count(*) as total FROM $from";
         if (isset($where) and $where != '') {
             $sql .= " WHERE $where";
         }
-   
+
         $stmt = $conn->prepare($sql);
 
         // Ejecutamos la consulta con los parámetros dados
@@ -264,10 +263,9 @@ function db_select(PDO $conn, $select, $from, $where, $orden=null, $params=null,
             // Devolvemos todos los resultados
             $res = $stmt->fetchAll();
         }
-
         
         $total = $res[0]['total'];
-
+        
         // Sentencia para obtener los registros
         $sql = "SELECT $select FROM $from";
         if (isset($where) and $where != '') {
@@ -283,13 +281,14 @@ function db_select(PDO $conn, $select, $from, $where, $orden=null, $params=null,
         if ($paginacion) {
             $sql .= " LIMIT " . ($paginacion['pagina'] - 1) * ($paginacion['num_items']) . ',' . $paginacion['num_items'];
         }
-
+        //echo $sql;exit;
         $stmt = $conn->prepare($sql);
 
         // Ejecutamos la consulta con los parámetros dados
         if ($stmt->execute($params)) {
             // Devolvemos todos los resultados
-            return ['total' => $total, 'datos' => $stmt->fetchAll()];
+            $res=['total' => $total, 'datos' => $stmt->fetchAll()];
+            return $res;
         }
         return false;
     } catch (PDOException $e) {
@@ -457,6 +456,10 @@ function db_insert(PDO $conn, string $table, array $dto): string|int|false
     if (empty($dto) || !is_valid_identifier($table)) {
         return false;
     }
+    
+    if(isset($dto['id'])){
+      unset($dto['id']);
+    }
 
     try {
         // Extraemos las claves del array (campos de la tabla)
@@ -482,7 +485,10 @@ function db_insert(PDO $conn, string $table, array $dto): string|int|false
         }
         return false;
     } catch (PDOException $e) {
-        echo $e;
+        if(DEBUG){
+          echo $e;
+          exit;
+        }
         logging($e);
         return false;
     }
@@ -561,7 +567,10 @@ function db_delete_by_id(PDO $conn, string $table, mixed $id, string $id_name = 
         // Ejecutamos con el parámetro
         return $stmt->execute([$id]);
     } catch (PDOException $e) {
-        logging($e);
+        if(DEBUG){
+          echo $e;
+          exit;
+        }
         return false;
     }
 }
