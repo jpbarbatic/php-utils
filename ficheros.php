@@ -34,6 +34,22 @@ function copiar_directorio($origen, $destino)
     closedir($directorio);
 }
 
+function addZip($fichero, $fichero_zip)
+{
+    if (is_file($fichero)) {
+        $zip = new ZipArchive();
+        if ($zip->open($fichero_zip, ZipArchive::CREATE) !== TRUE) {
+            throw new RuntimeException("No se pudo crear el archivo ZIP: $fichero_zip");
+        }
+
+        $res=$zip->addFile($fichero, basename($fichero));
+        $zip->close();
+        return $res;
+    } else {
+        return false;
+    }
+}
+
 function comprimirDirectorio($rutaDirectorio, $archivoZip)
 {
     // Verificar que el directorio exista
@@ -66,7 +82,8 @@ function comprimirDirectorio($rutaDirectorio, $archivoZip)
 }
 
 
-function borrarDirectorio($carpeta) {
+function borrarDirectorio($carpeta)
+{
     if (!is_dir($carpeta)) {
         throw new InvalidArgumentException("La ruta no es un directorio: $carpeta");
     }

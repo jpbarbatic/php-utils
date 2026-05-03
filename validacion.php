@@ -52,16 +52,15 @@ function validar_formulario($datosFormulario, $campos)
 {
     $errores = [];
     $valores = [];
-
     foreach ($campos as $campo => $config) {
-
+        //TODO: Repasar. Posiblemente haya que eliminar este if
         if (isset($datosFormulario[$campo])) {
             $valor = $valores[$campo] = trim(htmlspecialchars($datosFormulario[$campo]));
             $reglas = $config['reglas'] ?? [];
             $mensajes = $config['mensajes'] ?? [];
-            
+
             foreach ($reglas as $regla) {
-                
+
                 // Mensaje predeterminado o personalizado
                 $mensaje = $mensajes[$regla] ?? null;
                 if ($regla === 'requerido') {
@@ -77,19 +76,23 @@ function validar_formulario($datosFormulario, $campos)
                         $errores[$campo][] = $mensaje ?: "El correo electrónico no es válido.";
                     }
                 } elseif ($regla === 'numero') {
-
                     if (!empty($valor) && !is_numeric($valor)) {
                         $errores[$campo][] = $mensaje ?: "El valor debe ser un número entero.";
                     } else {
-                        
-                        if($valores[$campo]==''){
-                            unset($valores[$campo]);
-                        }else{
-                            $valores[$campo] = intval($valores[$campo]);
+                        if ($valor=='') {                                                                                
+                            $valores[$campo]=$config['defecto'];
+                        } else {
+                            $valores[$campo] = intval($valor);
                         }
                     }
-                }elseif ($regla === 'fecha') {
-                        
+                } elseif ($regla === 'fecha') {
+                    if (empty($valores[$campo])) {
+                        $valores[$campo]=$config['defecto'];
+                    }else{
+                        if(!validar_fecha($valor)){
+                            $errores[$campo][] = $mensaje ?: "La fecha no es correcta.";    
+                        }
+                    }
                 } elseif ($regla === 'decimal') {
                     if (!empty($valor) && !is_numeric($valor)) {
                         $errores[$campo][] = $mensaje ?: "El valor debe ser un número (entero o decimal).";
@@ -133,15 +136,32 @@ function validar_formulario($datosFormulario, $campos)
                 }
             }
         } else {
+            // TODO: Si no está deberíamos lanzar un error
             if (isset($config['defecto'])) {
-                $valores[$campo] = $config['defecto'];
+                if ($config['defecto'] != null) {
+                    $valores[$campo] = $config['defecto'];
+                } else {
+                    unset($valores[$campo]);
+                }
             }
         }
     }
-
     return [
         'valido' => empty($errores),
         'errores' => $errores,
         'valores' => $valores
     ];
+}
+
+function validar_fecha($fecha) {
+    // Paso 1: Verificar el formato con expresión regular
+    if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $fecha)) {
+        return false; // No cumple con dd/mm/yyyy
+    }
+
+    // Paso 2: Separar día, mes y año
+    list($ano, $mes, $dia) = explode('-', $fecha);
+
+    // Paso 3: Validar que sea una fecha real (ej. no 30/02/2023)
+    return checkdate((int)$mes, (int)$dia, (int)$ano);
 }

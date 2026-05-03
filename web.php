@@ -56,12 +56,21 @@ function fecha_array($campo, $array = null)
     return is_array($array) ? ($array[$campo] ?? '') : '';
 }
 
-function opciones_select($opciones, $indice)
+function opciones_select($opciones, $indice, $clave=null, $valor=null)
 {
-    foreach ($opciones as $k => $valor) {
-        $selected = (isset($indice) and $indice == $k) ? ' selected' : '';
-        echo "<option value=\"$k\"$selected>$valor</option>" . PHP_EOL;
+    foreach ($opciones as $k => $opcion) {
+        if($clave and $valor){
+            $selected = (isset($indice) and $indice == $opcion[$clave]) ? ' selected' : '';
+            echo "<option value=\"$opcion[$clave]\"$selected>$opcion[$valor]</option>" . PHP_EOL;            
+        }else{
+            $selected = (isset($indice) and $indice == $k) ? ' selected' : '';
+            echo "<option value=\"$k\"$selected>$opcion</option>" . PHP_EOL;
+        }
     }
+}
+
+function menu_activo($vista, $menu){
+    return preg_match("/^$menu/", $vista) ? ' active' : '';
 }
 
 function check_access()
@@ -90,7 +99,7 @@ function print_array($array)
  * @param  mixed $usarParams
  * @param  mixed $params
  * @param  mixed $delParams
- * @return void
+ * @return void|string
  */
 function ruta($r, $usarParams = false, $params = null, $delParams = null)
 {
@@ -220,7 +229,7 @@ function t($nombre)
  * procesarUrl
  *
  * @param  mixed $routes
- * @return void
+ * @return array
  */
 function procesarUrl($routes)
 {
@@ -318,11 +327,39 @@ function a_csv($filename, $campos, $datos)
         foreach ($campos as $key => $params) {
             if (isset($params['valores'])) {
                 $valores[] = $params['valores'][$dato[$key]];
+            } elseif(isset($params['func'])){
+                $valores[] = $params['func']($dato[$key]);
             } else {
                 $valores[] = $dato[$key];
             }
+
         }
         echo implode(';', $valores) . PHP_EOL;
     }
     die;
+}
+
+function download($file, $filename){
+    header("Content-type: application/gzip");
+    header("Content-Disposition: attachment; filename=$filename");
+    header("Content-length: " . filesize($file));
+    header("Pragma: no-cache");
+    header("Expires: 0");
+    readfile($file);
+}
+
+function tiene_permiso($permiso){
+
+    if(!isset($_SESSION['usuario']['id_rol']) or $_SESSION['usuario']['id_rol']==0){
+        return false;
+    }
+
+    if($_SESSION['usuario']['id']==1){
+        return true;
+    }
+
+    if(empty($_SESSION['permisos']))
+        return false;
+
+    return in_array($permiso, $_SESSION['permisos']);
 }
