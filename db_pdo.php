@@ -250,6 +250,7 @@ function db_query(PDO $conn, string $query, ?array $params = null): array|false
 function db_select(PDO $conn, $select, $from, $where=null, $orden=null, $params=null, $paginacion = null): array|false
 {
     try {
+        
         // Sentencia para obtener los totales
         $sql = "SELECT count(*) as total FROM $from";
         if (isset($where) and $where != '') {
@@ -272,7 +273,11 @@ function db_select(PDO $conn, $select, $from, $where=null, $orden=null, $params=
             $sql .= " WHERE $where";
         }
         if ($orden and isset($orden['orden_por'])) {
-            $sql .= " ORDER BY ".$orden['orden_por'];
+            if(is_array($orden['orden_por'])){
+                $sql .= " ORDER BY ".implode(',', $orden['orden_por']);
+            }else{
+                $sql .= " ORDER BY ".$orden['orden_por'];
+            }
             if(isset($orden['orden_dir'])){
                 $sql .= ' '.$orden['orden_dir'];
             }
@@ -469,7 +474,7 @@ function db_insert(PDO $conn, string $table, array $dto): string|int|false
             if (!is_valid_identifier($field)) return false;
             $field = "`$field`";
         }
-
+        
         // Marcadores de posición (?, ?, ...)
         $params = implode(', ', array_fill(0, count($dto), '?'));
 
@@ -525,13 +530,16 @@ function db_update(PDO $conn, string $table, array $dto, string $id_name = 'id')
 
     foreach ($dto as $key => $value) {
         if (!is_valid_identifier($key)) return false;
-        $fields[] = "`$key` = ?";
-        $values[] = $value;
+        if(true){
+            $fields[] = "`$key` = ?";
+            $values[] = $value;
+        }
     }
 
     // Añadimos el ID al final de los valores
     $values[] = $id;
 
+        
     // Armamos la consulta SQL
     $sql = "UPDATE `$table` SET " . implode(', ', $fields) . " WHERE `$id_name` = ?";
 
@@ -540,6 +548,9 @@ function db_update(PDO $conn, string $table, array $dto, string $id_name = 'id')
         $stmt = $conn->prepare($sql);
         return $stmt->execute($values);
     } catch (PDOException $e) {
+        if(DEBUG){
+            echo $e;exit;
+        }
         logging($e);
         return false;
     }
